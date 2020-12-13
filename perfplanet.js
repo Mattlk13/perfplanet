@@ -1,35 +1,52 @@
-var pipe = "http://pipes.yahoo.com/pipes/pipe.run?_id=a6cdaf1d9dbe656ba1f0ab714cc3a08e&_render=json&_callback=render&howmany=20";
-pipe = "data.js";
+var pipe = 'data.js';
 var s = document.createElement('script');
 s.src = pipe;
 document.documentElement.firstChild.appendChild(s);
-function render(o) {
+s.onload = function render(o) {
   var items = null,
-      r = document.getElementById('blogs'),
-      i = 0, b = null, cats = [], categories = '',
-      html = '', author = '', meta = [];
+    r = document.getElementById('blogs'),
+    i = 0,
+    b = null,
+    cats = [],
+    categories = '',
+    html = '',
+    author = '',
+    meta = [];
   r.innerHTML = '';
   try {
-    items = o.query.results.item;
+    items = data;
   } catch (e) {
-    r.innerHTML = "<p>failed to retrieve blog posts, please refresh the page to try again.</p>";
+    r.innerHTML =
+      '<p>failed to retrieve blog posts, please refresh the page to try again.</p>';
   }
-    
+
   for (i = 0; i < items.length; i++) {
     b = items[i];
-    html += '<div class="blogpost"><h2 class="title"><a href="'+ b.link +'">' + (b.title || b['y:title']) + "</a></h2>";
+    html +=
+      '<div class="blogpost"><h2 class="title"><a href="' +
+      b.link +
+      '">' +
+      (b.title || b['y:title']) +
+      '</a></h2>';
     meta = [];
-    author = 'Unknown';
+    var a = document.createElement('a');
+    a.href = b.link;
+    meta.push('From: ' + a.hostname);
+    author = '';
     if (b['dc:creator']) {
       author = b['dc:creator'];
-    } else if (b.author && b.author.name){
+    } else if (b.author && b.author.name) {
       author = b.author.name;
-    } else if (typeof b.author === "string"){
+    } else if (typeof b.author === 'string') {
       author = b.author;
-    } else if (typeof b.creator === "string"){
+    } else if (typeof b.creator === 'string') {
       author = b.creator;
+    } else if (b.author && typeof b.author.join === 'function') {
+      author = b.author.join(', ');
     }
-    meta.push('Author: ' + author);
+    if (author) {
+      meta.push('Author: ' + author);
+    }
     meta.push('Published: ' + b.pubDate);
     if (b.category) {
       if (typeof b.category.join === 'function') {
@@ -45,16 +62,33 @@ function render(o) {
       } else {
         categories = b.category;
       }
-      meta.push('Filed in: ' + categories);
-        
+      if (categories) {
+        meta.push('Filed in: ' + categories);
       }
-      html += '<ul><li>' + meta.join('</li><li>') + '</li></ul>'; 
-      html += b.encoded || b['content:encoded'] || b.description;
-      html += '<div class="ornament">&#9734; <b>&#9734;</b> &#9734;</div>';
-      html += "</div>";
     }
-    
+
+    html += '<ul><li>' + meta.join('</li><li>') + '</li></ul>';
+    html += b.description;
+    html += '<div class="sharing">';
+    html +=
+      '<a target="_blank" rel="noopener noreferrer" href="https://twitter.com/intent/tweet?via=perfplanet&url=' +
+      encodeURIComponent(b.link) +
+      '">Tweet</a>';
+    html +=
+      '<a target="_blank" rel="noopener noreferrer" href="https://www.facebook.com/sharer/sharer.php?u=' +
+      encodeURIComponent(b.link) +
+      '">Facebook</a>';
+    html +=
+      '<a target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=' +
+      encodeURIComponent(b.link) +
+      '">LinkedIn</a>';
+    if (navigator.clipboard) {
+      html += '<a href="javascript:navigator.clipboard.writeText(\''+encodeURIComponent(b.link)+'\')">Copy URL</a>';
+    }
+    html += '</div>';
+    html += '<div class="ornament">&#9734; <b>&#9734;</b> <i>&#9734;</i></div>';
+    html += '</div>';
+  }
+
   r.innerHTML = html;
-}
-
-
+};
